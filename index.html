@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1x1 Pro - Rizal Edition (csTimer UI)</title>
+    <style>
+        :root {
+            --digital-green: #00ff41;
+            --ui-pink: #f06292;
+            --g5-blue: #0088ff;
+            --cube-size: 85px;
+            --reset-red: #ff3d00;
+            --cs-bg: #eeeeee;
+            --cs-sidebar: #ffffff;
+            --cs-border: #cccccc;
+        }
+
+        body {
+            background: #120a08 url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+
+        /* --- csTimer STYLE SIDEBAR --- */
+        #side-panel {
+            width: 260px;
+            height: 100vh;
+            background: var(--cs-sidebar);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--cs-border);
+            z-index: 100;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .cs-header {
+            background: #444;
+            color: #fff;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+
+        .stats-table td {
+            padding: 4px 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stats-label {
+            font-weight: bold;
+            color: #666;
+            width: 40%;
+        }
+
+        .stats-val {
+            text-align: right;
+            font-family: monospace;
+        }
+
+        #times-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 5px;
+            background: #f9f9f9;
+            border-top: 2px solid var(--cs-border);
+        }
+
+        .time-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 8px;
+            border-bottom: 1px solid #ddd;
+            font-family: monospace;
+        }
+
+        .time-index {
+            color: #888;
+            margin-right: 10px;
+        }
+
+        /* --- WORKSPACE --- */
+        #workspace {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            perspective: 1200px;
+        }
+
+        #mat {
+            width: 1000px;
+            height: 500px;
+            border-radius: 150px;
+            border: 12px solid #111;
+            position: relative;
+            box-shadow: 0 50px 80px rgba(0, 0, 0, 0.9);
+            background: #000 url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+        }
+
+        /* --- G5 STACKMAT --- */
+        #g5-timer {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 460px;
+            height: 130px;
+            background: #0a0a0a;
+            clip-path: polygon(10% 0%, 90% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+            border-top: 2px solid #333;
+            z-index: 10;
+        }
+
+        #timer-display-area {
+            background: #1a1a1a;
+            width: 180px;
+            height: 90px;
+            margin: 5px auto;
+            border-radius: 8px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #timer-screen {
+            background: #000;
+            width: 140px;
+            height: 45px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #timer-text {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            color: var(--digital-green);
+            margin: 0;
+        }
+
+        #reset-btn {
+            width: 45px;
+            height: 22px;
+            background: var(--reset-red);
+            border: 1px solid #000;
+            border-radius: 4px;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sensor-pad {
+            position: absolute;
+            width: 110px;
+            height: 90px;
+            background: #050505;
+            border: 2px solid #222;
+            border-radius: 20px;
+            bottom: 15px;
+            box-shadow: inset 0 0 15px var(--g5-blue);
+        }
+
+        #pad-l {
+            left: 15px;
+            transform: rotate(-10deg);
+        }
+
+        #pad-r {
+            right: 15px;
+            transform: rotate(10deg);
+        }
+
+        /* --- 1x1 CUBE --- */
+        #cube-container {
+            position: absolute;
+            width: var(--cube-size);
+            height: var(--cube-size);
+            perspective: 1000px;
+            z-index: 60;
+            display: none;
+            cursor: grab;
+        }
+
+        #cube-rotator {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.2s cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        .face {
+            position: absolute;
+            width: var(--cube-size);
+            height: var(--cube-size);
+            background: #000;
+            border: 2.5px solid #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: visible;
+        }
+
+        .sticker {
+            width: 92%;
+            height: 92%;
+            border-radius: 6px;
+        }
+
+        /* LOGO */
+        .f-top {
+            background: #ffffff url('logo.png') no-repeat center;
+            background-size: contain;
+        }
+
+        .f-front {
+            background: #00f000;
+        }
+
+        .f-back {
+            background: #0045ad;
+        }
+
+        .f-right {
+            background: #ff0000;
+        }
+
+        .f-left {
+            background: #ff5800;
+        }
+
+        .f-bottom {
+            background: #ffff00;
+        }
+
+        .front {
+            transform: rotateY(0deg) translateZ(42.5px);
+        }
+
+        .back {
+            transform: rotateY(180deg) translateZ(42.5px);
+        }
+
+        .right {
+            transform: rotateY(90deg) translateZ(42.5px);
+        }
+
+        .left {
+            transform: rotateY(-90deg) translateZ(42.5px);
+        }
+
+        .top {
+            transform: rotateX(90deg) translateZ(42.5px);
+        }
+
+        .bottom {
+            transform: rotateX(-90deg) translateZ(42.5px);
+        }
+
+        /* --- COVER --- */
+        #cover-wrapper {
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            cursor: pointer;
+            z-index: 200;
+            left: 330px;
+            top: 50px;
+        }
+
+        #cover {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .cover-sticker {
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="side-panel">
+        <div class="cs-header">Session 1</div>
+        <table class="stats-table">
+            <tr>
+                <td class="stats-label">Solves:</td>
+                <td id="stat-count" class="stats-val">0</td>
+            </tr>
+            <tr>
+                <td class="stats-label">Best:</td>
+                <td id="stat-best" class="stats-val">-</td>
+            </tr>
+            <tr>
+                <td class="stats-label">ao5:</td>
+                <td id="stat-ao5" class="stats-val">-</td>
+            </tr>
+            <tr>
+                <td class="stats-label">ao12:</td>
+                <td id="stat-ao12" class="stats-val">-</td>
+            </tr>
+            <tr>
+                <td class="stats-label">ao100:</td>
+                <td id="stat-ao100" class="stats-val">-</td>
+            </tr>
+        </table>
+        <div id="times-container"></div>
+    </div>
+
+    <div id="workspace">
+        <div id="mat">
+            <div id="g5-timer">
+                <div id="pad-l" class="sensor-pad"></div>
+                <div id="timer-display-area">
+                    <div id="timer-screen">
+                        <p id="timer-text">0.000</p>
+                    </div>
+                    <div id="reset-btn" onclick="manualReset()">RESET</div>
+                </div>
+                <div id="pad-r" class="sensor-pad"></div>
+            </div>
+
+            <div id="cover-wrapper" onclick="liftCover()">
+                <div id="cover"></div>
+            </div>
+
+            <div id="cube-container">
+                <div id="cube-rotator">
+                    <div class="face front">
+                        <div class="sticker f-front"></div>
+                    </div>
+                    <div class="face back">
+                        <div class="sticker f-back"></div>
+                    </div>
+                    <div class="face left">
+                        <div class="sticker f-left"></div>
+                    </div>
+                    <div class="face right">
+                        <div class="sticker f-right"></div>
+                    </div>
+                    <div class="face top">
+                        <div class="sticker f-top"></div>
+                    </div>
+                    <div class="face bottom">
+                        <div class="sticker f-bottom"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rotator = document.getElementById('cube-rotator');
+        const container = document.getElementById('cube-container');
+        const timerText = document.getElementById('timer-text');
+        const coverWrapper = document.getElementById('cover-wrapper');
+        const timerBody = document.getElementById('g5-timer');
+        const timesList = [];
+
+        let running = false;
+        let startTime, interval;
+        let posX = 458, posY = 150;
+        let transformBuffer = "rotateX(0deg) rotateY(0deg)";
+
+        function initCover() {
+            const cover = document.getElementById('cover');
+            const colors = ['#ffffff', '#ffff00', '#ff0000', '#ffa500', '#00ff00', '#0000ff'];
+            for (let i = 0; i < 64; i++) {
+                let s = document.createElement('div');
+                s.className = 'cover-sticker';
+                s.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                cover.appendChild(s);
+            }
+        }
+
+        function liftCover() {
+            if (running) return;
+            coverWrapper.style.display = 'none';
+            container.style.display = 'block';
+
+            // SCRAMBLE POSITION: Random spot on mat (avoiding timer area)
+            posX = Math.floor(Math.random() * 800) + 100;
+            posY = Math.floor(Math.random() * 250) + 50;
+            container.style.left = posX + "px";
+            container.style.top = posY + "px";
+
+            // SCRAMBLE ROTATION
+            const scrambles = ['rotateX(90deg) ', 'rotateX(-90deg) ', 'rotateY(90deg) ', 'rotateY(-90deg) '];
+            for (let i = 0; i < 8; i++) {
+                transformBuffer = scrambles[Math.floor(Math.random() * scrambles.length)] + transformBuffer;
+            }
+            rotator.style.transform = transformBuffer;
+
+            running = true;
+            startTime = performance.now();
+            interval = setInterval(() => {
+                timerText.innerText = ((performance.now() - startTime) / 1000).toFixed(3);
+            }, 10);
+        }
+
+        function applyMove(move) {
+            transformBuffer = move + transformBuffer;
+            rotator.style.transform = transformBuffer;
+            setTimeout(checkFinish, 210);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!running) return;
+            const key = e.key.toLowerCase();
+            if (key === 'w' || key === 'arrowup') applyMove('rotateX(-90deg) ');
+            if (key === 's' || key === 'arrowdown') applyMove('rotateX(90deg) ');
+            if (key === 'a' || key === 'arrowleft') applyMove('rotateY(-90deg) ');
+            if (key === 'd' || key === 'arrowright') applyMove('rotateY(90deg) ');
+        });
+
+        function manualReset() {
+            clearInterval(interval);
+            running = false;
+            timerText.innerText = "0.000";
+            timerText.style.color = "var(--digital-green)";
+            coverWrapper.style.display = 'block';
+            container.style.display = 'none';
+            transformBuffer = "rotateX(0deg) rotateY(0deg)";
+            rotator.style.transform = transformBuffer;
+        }
+
+        // --- DRAGGING ---
+        let isDragging = false, dragOffset = { x: 0, y: 0 };
+        container.addEventListener('mousedown', (e) => {
+            if (!running) return;
+            isDragging = true;
+            const rect = container.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const matRect = document.getElementById('mat').getBoundingClientRect();
+            posX = e.clientX - matRect.left - dragOffset.x;
+            posY = e.clientY - matRect.top - dragOffset.y;
+            container.style.left = posX + "px";
+            container.style.top = posY + "px";
+            checkFinish();
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        function calculateAvg(n) {
+            if (timesList.length < n) return "-";
+            const lastN = timesList.slice(0, n);
+            const sorted = [...lastN].sort((a, b) => a - b);
+            // Drop best and worst for averages
+            sorted.pop();
+            sorted.shift();
+            const sum = sorted.reduce((a, b) => a + b, 0);
+            return (sum / (n - 2)).toFixed(3);
+        }
+
+        function checkFinish() {
+            if (!running) return;
+            const logoSticker = document.querySelector('.f-top');
+            const greenSticker = document.querySelector('.f-front');
+            const logoRect = logoSticker.getBoundingClientRect();
+            const greenRect = greenSticker.getBoundingClientRect();
+            const cubeRect = container.getBoundingClientRect();
+            const timerRect = timerBody.getBoundingClientRect();
+
+            const isLogoFront = logoRect.height > 75;
+            const isGreenBottom = greenRect.top > (cubeRect.top + 42);
+
+            const isTouchingTimer = !(cubeRect.right < timerRect.left || cubeRect.left > timerRect.right || cubeRect.bottom < timerRect.top || cubeRect.top > timerRect.bottom);
+
+            if (isLogoFront && isGreenBottom && isTouchingTimer) {
+                finalize();
+            }
+        }
+
+        function finalize() {
+            running = false;
+            clearInterval(interval);
+            const finalTime = parseFloat(timerText.innerText);
+            timesList.unshift(finalTime);
+            timerText.style.color = "white";
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-count').innerText = timesList.length;
+            document.getElementById('stat-best').innerText = Math.min(...timesList).toFixed(3);
+            document.getElementById('stat-ao5').innerText = calculateAvg(5);
+            document.getElementById('stat-ao12').innerText = calculateAvg(12);
+            document.getElementById('stat-ao100').innerText = calculateAvg(100);
+
+            const container = document.getElementById('times-container');
+            container.innerHTML = "";
+            timesList.forEach((t, i) => {
+                const div = document.createElement('div');
+                div.className = "time-entry";
+                div.innerHTML = `<span class="time-index">${timesList.length - i}.</span> <b>${t.toFixed(3)}</b>`;
+                container.appendChild(div);
+            });
+        }
+
+        initCover();
+    </script>
+</body>
+
+</html>
